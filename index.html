@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="随身速记">
+<meta name="theme-color" content="#f2f2f7">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='120' height='120' rx='24' fill='%23f2f2f7'/><text x='60' y='80' text-anchor='middle' font-size='56'>📝</text></svg>">
+<title>随身速记</title>
+<style>
+:root {
+  --bg: #f2f2f7;
+  --card: #ffffff;
+  --sep: #e5e5ea;
+  --text: #1c1c1e;
+  --sec: #8e8e93;
+  --blue: #007aff;
+  --red: #ff3b30;
+  --green: #34c759;
+  --nav-h: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 500px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding-top: var(--safe-top);
+  padding-bottom: calc(var(--safe-bottom) + 16px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Views ===== */
+.view { display: none; flex-direction: column; flex: 1; }
+.view.active { display: flex; }
+
+/* ===== iOS Nav Bar ===== */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: var(--nav-h);
+  background: var(--bg);
+  position: sticky;
+  top: var(--safe-top);
+  z-index: 10;
+}
+.nav-left, .nav-right { min-width: 60px; }
+.nav-right { text-align: right; }
+.nav-btn {
+  border: none;
+  background: none;
+  color: var(--blue);
+  font-size: 17px;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0;
+}
+.nav-btn.destructive { color: var(--red); }
+.nav-btn:active { opacity: 0.4; }
+.nav-title {
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Large title area */
+.header-area {
+  padding: 8px 20px 12px;
+  background: var(--bg);
+}
+.header-area h1 {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.header-area .subtitle {
+  font-size: 15px;
+  color: var(--sec);
+  margin-top: 2px;
+}
+
+/* ===== iOS List ===== */
+.list-section {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0 20px;
+}
+.ios-list {
+  background: var(--card);
+  border-radius: 12px;
+  margin: 0 16px 16px;
+  overflow: hidden;
+}
+.ios-row {
+  display: flex;
+  align-items: center;
+  padding: 13px 16px;
+  border-bottom: 0.5px solid var(--sep);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  user-select: none;
+}
+.ios-row:last-child { border-bottom: none; }
+.ios-row:active { background: #e5e5ea; }
+.ios-row-icon { font-size: 28px; margin-right: 12px; flex: none; }
+.ios-row-content { flex: 1; min-width: 0; }
+.ios-row-title { font-size: 17px; }
+.ios-row-detail { font-size: 13px; color: var(--sec); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ios-row-arrow { color: #c7c7cc; font-size: 18px; flex: none; margin-left: 8px; }
+.ios-row-count {
+  font-size: 14px;
+  color: var(--sec);
+  background: #f2f2f7;
+  border-radius: 16px;
+  padding: 2px 10px;
+  flex: none;
+  margin-right: 8px;
+}
+.ios-row-date { font-size: 13px; color: var(--sec); flex: none; }
+
+/* Add row */
+.add-row {
+  display: flex;
+  align-items: center;
+  padding: 13px 16px;
+  cursor: pointer;
+  color: var(--blue);
+  font-size: 17px;
+  background: var(--card);
+  margin: 0 16px 16px;
+  border-radius: 12px;
+}
+.add-row:active { background: #e5e5ea; }
+.add-row-icon { font-size: 20px; margin-right: 10px; }
+
+/* ===== Search ===== */
+.search-box {
+  margin: 0 16px 12px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #e5e5ea;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: background 0.2s;
+}
+.search-box:focus { background: #d9d9de; }
+
+/* ===== Swipe Delete ===== */
+.swipe-container { position: relative; overflow: hidden; border-radius: 0; }
+.swipe-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 20px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+}
+.ios-row.swiped { transform: translateX(-80px); transition: transform 0.25s ease; }
+
+/* ===== Editor ===== */
+.editor-nav { background: var(--card); border-bottom: 0.5px solid var(--sep); }
+.editor-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+.title-input, .content-input {
+  border: none;
+  outline: none;
+  font-family: inherit;
+  background: transparent;
+  width: 100%;
+  resize: none;
+}
+.title-input {
+  font-size: 24px;
+  font-weight: 700;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--sep);
+  margin-bottom: 12px;
+}
+.title-input::placeholder { color: #c7c7cc; }
+.content-input {
+  flex: 1;
+  font-size: 17px;
+  line-height: 1.6;
+  padding: 4px 0;
+  min-height: 200px;
+}
+.content-input::placeholder { color: #c7c7cc; }
+
+.editor-meta {
+  font-size: 12px;
+  color: var(--sec);
+  padding: 12px 0 0;
+  border-top: 0.5px solid var(--sep);
+  margin-top: 12px;
+}
+.save-indicator {
+  font-size: 12px;
+  color: var(--green);
+  text-align: center;
+  padding: 4px;
+  transition: opacity 0.3s;
+}
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal-sheet {
+  background: #f2f2f7;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px 12px 0 0;
+  padding: 8px 0 0;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-section {
+  background: var(--card);
+  border-radius: 12px;
+  margin: 8px 12px;
+  overflow: hidden;
+}
+.modal-input {
+  width: 100%;
+  border: none;
+  padding: 14px 16px;
+  font-size: 17px;
+  font-family: inherit;
+  outline: none;
+  background: var(--card);
+}
+.modal-input::placeholder { color: #c7c7cc; }
+.modal-row {
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 17px;
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--sep);
+}
+.modal-row:last-child { border-bottom: none; }
+.modal-row.primary { color: var(--blue); font-weight: 500; }
+.modal-row.destructive { color: var(--red); }
+.modal-row:active { background: #e5e5ea; }
+.modal-cancel {
+  padding: 14px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--card);
+  border-radius: 12px;
+  margin: 8px 12px;
+}
+.modal-cancel:active { background: #e5e5ea; }
+
+/* Icon picker */
+.icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+}
+.icon-option {
+  width: 44px; height: 44px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #f2f2f7;
+  transition: border-color 0.15s;
+}
+.icon-option.selected { border-color: var(--blue); background: #e8f0fe; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--sec);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state .empty-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.empty-state .empty-sub { font-size: 14px; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: calc(var(--safe-top) + 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- ===== View: Notebook List ===== -->
+  <div class="view active" id="view-notebooks">
+    <div class="header-area">
+      <h1>随身速记</h1>
+      <p class="subtitle" id="nbCount">0 个笔记本</p>
+    </div>
+    <div class="list-section">
+      <div class="ios-list" id="notebookList"></div>
+      <div class="add-row" onclick="showAddNotebook()">
+        <span class="add-row-icon">+</span> 新建笔记本
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== View: Note List ===== -->
+  <div class="view" id="view-notes">
+    <div class="nav">
+      <div class="nav-left"><button class="nav-btn" onclick="goBack()">← 笔记</button></div>
+      <div class="nav-title" id="notesTitle">工作</div>
+      <div class="nav-right">
+        <button class="nav-btn" onclick="searchNotes()">🔍</button>
+        <button class="nav-btn" onclick="showNoteEditor()" style="font-size:22px;">✏️</button>
+      </div>
+    </div>
+    <input class="search-box hidden" id="searchInput" placeholder="搜索笔记..." oninput="filterNotes()">
+    <div class="list-section" id="noteListContainer">
+      <div class="ios-list" id="noteList"></div>
+    </div>
+  </div>
+
+  <!-- ===== View: Note Editor ===== -->
+  <div class="view" id="view-editor">
+    <div class="nav editor-nav">
+      <div class="nav-left"><button class="nav-btn" id="editorBackBtn" onclick="closeEditor()">取消</button></div>
+      <div class="nav-title">笔记</div>
+      <div class="nav-right"><button class="nav-btn" onclick="saveAndClose()">保存</button></div>
+    </div>
+    <div class="editor-body">
+      <input class="title-input" id="editorTitle" placeholder="笔记标题">
+      <textarea class="content-input" id="editorContent" placeholder="开始写..."></textarea>
+      <div class="save-indicator" id="saveIndicator"></div>
+      <div class="editor-meta" id="editorMeta"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay hidden" id="modal" onclick="closeModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-section" id="modalContent"></div>
+    <div class="modal-cancel" onclick="closeModal()">取消</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== Data Layer =====
+const STORE_KEY = 'quick_notes_data';
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY));
+    return d && d.notebooks ? d : { notebooks: [], notes: [] };
+  } catch { return { notebooks: [], notes: [] }; }
+}
+
+function save(data) { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+
+// ===== State =====
+let data = load();
+let currentNotebookId = null;
+let editingNoteId = null;
+let searchQuery = '';
+let autoSaveTimer = null;
+
+// ===== View Navigation =====
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+}
+
+function openNotebook(id) {
+  currentNotebookId = id;
+  const nb = data.notebooks.find(n => n.id === id);
+  document.getElementById('notesTitle').textContent = nb ? nb.icon + ' ' + nb.name : '';
+  document.getElementById('searchInput').classList.add('hidden');
+  document.getElementById('searchInput').value = '';
+  searchQuery = '';
+  showView('notes');
+  renderNotes();
+}
+
+function goBack() {
+  currentNotebookId = null;
+  showView('notebooks');
+  renderNotebooks();
+}
+
+function showNoteEditor(noteId) {
+  editingNoteId = noteId || null;
+  if (noteId) {
+    const note = data.notes.find(n => n.id === noteId);
+    document.getElementById('editorTitle').value = note.title || '';
+    document.getElementById('editorContent').value = note.content || '';
+    document.getElementById('editorMeta').textContent = '创建于 ' + fmtDate(note.createdAt);
+  } else {
+    document.getElementById('editorTitle').value = '';
+    document.getElementById('editorContent').value = '';
+    document.getElementById('editorMeta').textContent = '新建笔记';
+  }
+  document.getElementById('saveIndicator').textContent = '';
+  showView('editor');
+  setTimeout(() => {
+    if (noteId) {
+      document.getElementById('editorContent').focus();
+    } else {
+      document.getElementById('editorContent').focus();
+    }
+  }, 100);
+}
+
+function closeEditor() {
+  clearTimeout(autoSaveTimer);
+  // 强制自动保存一次
+  autoSaveNow();
+  editingNoteId = null;
+  showView('notes');
+  renderNotes();
+}
+
+// ===== Notebook CRUD =====
+function showAddNotebook()       { showNotebookModal(); }
+function showRenameNotebook(id)  { const nb = data.notebooks.find(n => n.id === id); showNotebookModal(nb); }
+function showDeleteNotebook(id)  {
+  const nb = data.notebooks.find(n => n.id === id);
+  const count = data.notes.filter(n => n.notebookId === id).length;
+  showModal(`
+    <div class="modal-row destructive" onclick="deleteNotebook('${id}')">
+      删除「${nb.icon} ${nb.name}」${count > 0 ? '及 ' + count + ' 条笔记' : ''}
+    </div>
+  `);
+}
+
+function showNotebookModal(existing) {
+  const icons = ['📋','🏠','💡','📝','🎯','📖','💼','🌟','🎨','✈️','🍔','❤️','🎵','📸','🔬','💻'];
+  let selectedIcon = existing ? existing.icon : '📋';
+  let html = `<input class="modal-input" id="nbNameInput" placeholder="笔记本名称" value="${existing ? escHtml(existing.name) : ''}" autofocus>`;
+  html += `<div class="icon-grid">`;
+  icons.forEach(ic => {
+    html += `<div class="icon-option${ic === selectedIcon ? ' selected' : ''}" onclick="selectIcon(this, '${ic}')">${ic}</div>`;
+  });
+  html += `</div>`;
+  html += `<div class="modal-row primary" id="nbConfirmBtn" onclick="${existing ? `renameNotebook('${existing.id}')` : 'createNotebook()'}">
+    ${existing ? '保存' : '创建笔记本'}
+  </div>`;
+  showModal(html);
+  window._selectedIcon = selectedIcon;
+}
+
+function selectIcon(el, icon) {
+  document.querySelectorAll('.icon-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  window._selectedIcon = icon;
+}
+
+function createNotebook() {
+  const name = document.getElementById('nbNameInput').value.trim();
+  if (!name) { toast('请输入名称'); return; }
+  data.notebooks.push({ id: uid(), name, icon: window._selectedIcon, createdAt: new Date().toISOString() });
+  save(data);
+  closeModal();
+  renderNotebooks();
+}
+
+function renameNotebook(id) {
+  const name = document.getElementById('nbNameInput').value.trim();
+  if (!name) { toast('请输入名称'); return; }
+  const nb = data.notebooks.find(n => n.id === id);
+  nb.name = name;
+  nb.icon = window._selectedIcon;
+  save(data);
+  closeModal();
+  renderNotebooks();
+}
+
+function deleteNotebook(id) {
+  data.notebooks = data.notebooks.filter(n => n.id !== id);
+  data.notes = data.notes.filter(n => n.notebookId !== id);
+  save(data);
+  closeModal();
+  if (currentNotebookId === id) { goBack(); }
+  renderNotebooks();
+}
+
+// ===== Note CRUD =====
+function createNote() {
+  const note = {
+    id: uid(),
+    notebookId: currentNotebookId,
+    title: '',
+    content: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  data.notes.unshift(note);
+  save(data);
+  showNoteEditor(note.id);
+}
+
+function saveNote() {
+  const title = document.getElementById('editorTitle').value.trim();
+  const content = document.getElementById('editorContent').value;
+  if (editingNoteId) {
+    const note = data.notes.find(n => n.id === editingNoteId);
+    if (note) {
+      note.title = title || content.split('\n')[0] || '无标题';
+      note.content = content;
+      note.updatedAt = new Date().toISOString();
+    }
+  } else {
+    // 新建笔记
+    const note = {
+      id: uid(),
+      notebookId: currentNotebookId,
+      title: title || content.split('\n')[0] || '无标题',
+      content,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    data.notes.unshift(note);
+    editingNoteId = note.id;
+  }
+  save(data);
+  document.getElementById('saveIndicator').textContent = '✓ 已保存';
+  setTimeout(() => { document.getElementById('saveIndicator').textContent = ''; }, 1500);
+}
+
+function autoSaveNow() {
+  const title = document.getElementById('editorTitle').value.trim();
+  const content = document.getElementById('editorContent').value;
+  if (!title && !content) return;
+  saveNote();
+}
+
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  document.getElementById('saveIndicator').textContent = '...';
+  autoSaveTimer = setTimeout(() => {
+    saveNote();
+  }, 1500);
+}
+
+function saveAndClose() {
+  clearTimeout(autoSaveTimer);
+  saveNote();
+  closeEditor();
+}
+
+function deleteNote(id) {
+  data.notes = data.notes.filter(n => n.id !== id);
+  save(data);
+  if (editingNoteId === id) {
+    editingNoteId = null;
+    showView('notes');
+  }
+  renderNotes();
+}
+
+// ===== Rendering =====
+function renderNotebooks() {
+  const list = document.getElementById('notebookList');
+  document.getElementById('nbCount').textContent = data.notebooks.length + ' 个笔记本';
+
+  if (data.notebooks.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📝</div>
+      <div class="empty-title">还没有笔记本</div>
+      <div class="empty-sub">点击下方新建第一个笔记本</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = data.notebooks.map(nb => {
+    const count = data.notes.filter(n => n.notebookId === nb.id).length;
+    return `
+      <div class="ios-row" onclick="openNotebook('${nb.id}')">
+        <span class="ios-row-icon">${nb.icon}</span>
+        <span class="ios-row-title" style="flex:1">${escHtml(nb.name)}</span>
+        <span class="ios-row-count">${count}</span>
+        <span class="ios-row-arrow">›</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderNotes() {
+  const list = document.getElementById('noteList');
+  let notes = data.notes.filter(n => n.notebookId === currentNotebookId);
+
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    notes = notes.filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q));
+  }
+
+  notes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  if (notes.length === 0) {
+    const msg = searchQuery ? '没有匹配的笔记' : '还没有笔记';
+    const sub = searchQuery ? '' : '点击右上角 ✏️ 新建';
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📄</div>
+      <div class="empty-title">${msg}</div>
+      <div class="empty-sub">${sub}</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = notes.map(n => {
+    const preview = (n.content || '').replace(/\n/g, ' ').slice(0, 50);
+    return `
+      <div class="ios-row" onclick="showNoteEditor('${n.id}')">
+        <div class="ios-row-content">
+          <div class="ios-row-title">${escHtml(n.title || '无标题')}</div>
+          ${preview ? `<div class="ios-row-detail">${escHtml(preview)}</div>` : ''}
+        </div>
+        <span class="ios-row-date">${fmtDateShort(n.updatedAt)}</span>
+        <span style="font-size:12px;color:var(--red);padding:4px 6px;flex:none;" onclick="event.stopPropagation();deleteNote('${n.id}')">🗑</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== Search =====
+function searchNotes() {
+  const input = document.getElementById('searchInput');
+  input.classList.toggle('hidden');
+  if (!input.classList.contains('hidden')) {
+    input.focus();
+    input.value = '';
+    searchQuery = '';
+    renderNotes();
+  }
+}
+
+function filterNotes() {
+  searchQuery = document.getElementById('searchInput').value;
+  renderNotes();
+}
+
+// ===== Modal =====
+function showModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').classList.add('hidden');
+}
+
+// ===== Toast =====
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ===== Utils =====
+function escHtml(s) { const el = document.createElement('span'); el.textContent = s; return el.innerHTML; }
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function fmtDateShort(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 86400000 && now.getDate() === d.getDate()) {
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  return (d.getMonth()+1) + '/' + d.getDate();
+}
+
+// ===== Keyboard =====
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!document.getElementById('modal').classList.contains('hidden')) {
+      closeModal();
+    } else if (document.getElementById('view-editor').classList.contains('active')) {
+      closeEditor();
+    }
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault();
+    if (document.getElementById('view-editor').classList.contains('active')) {
+      clearTimeout(autoSaveTimer);
+      saveNote();
+      toast('已保存');
+    }
+  }
+});
+
+// ===== Editor auto-save =====
+document.getElementById('editorTitle').addEventListener('input', scheduleAutoSave);
+document.getElementById('editorContent').addEventListener('input', scheduleAutoSave);
+
+// ===== Editor back button: save on back =====
+document.getElementById('editorBackBtn').addEventListener('click', function(e) {
+  e.preventDefault();
+  saveAndClose();
+});
+
+// ===== PWA Service Worker =====
+if ('serviceWorker' in navigator) {
+  // 查找并注册独立的 sw.js
+  const swPath = new URL('sw.js', location.href).href;
+  // 先尝试注册独立 SW 文件
+  fetch(swPath, { method: 'HEAD' }).then(r => {
+    if (r.ok) {
+      navigator.serviceWorker.register(swPath).catch(() => {});
+    }
+  }).catch(() => {
+    // SW 文件不存在，跳过离线支持
+  });
+}
+
+// ===== Init =====
+renderNotebooks();
+
+// 如果有默认笔记本，直接打开
+if (data.notebooks.length === 0) {
+  // 预置一个示例笔记本
+  data.notebooks.push({ id: uid(), name: '我的笔记', icon: '📝', createdAt: new Date().toISOString() });
+  save(data);
+  renderNotebooks();
+}
+</script>
+</body>
+</html>
