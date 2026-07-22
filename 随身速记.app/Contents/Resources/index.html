@@ -7,10 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="随身速记">
 <meta name="theme-color" content="#f2f2f7">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" sizes="192x192" href="icon-192.png">
-<link rel="icon" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='120' height='120' rx='24' fill='%23f2f2f7'/><text x='60' y='80' text-anchor='middle' font-size='56'>📝</text></svg>">
 <title>随身速记</title>
 <style>
 :root {
@@ -779,7 +776,16 @@ document.getElementById('editorBackBtn').addEventListener('click', function(e) {
 
 // ===== PWA Service Worker =====
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // 查找并注册独立的 sw.js
+  const swPath = new URL('sw.js', location.href).href;
+  // 先尝试注册独立 SW 文件
+  fetch(swPath, { method: 'HEAD' }).then(r => {
+    if (r.ok) {
+      navigator.serviceWorker.register(swPath).catch(() => {});
+    }
+  }).catch(() => {
+    // SW 文件不存在，跳过离线支持
+  });
 }
 
 // ===== Init =====
