@@ -1,5 +1,5 @@
 // Service Worker for 随身速记
-const CACHE = 'quick-notes-v1';
+const CACHE = 'quick-notes-v3';
 const URLS = [location.origin + location.pathname.replace(/sw\.js$/, ''), location.origin + location.pathname.replace(/\/sw\.js$/, '/')];
 
 self.addEventListener('install', e => {
